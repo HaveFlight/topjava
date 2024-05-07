@@ -3,11 +3,12 @@ package ru.javawebinar.topjava.util;
 import ru.javawebinar.topjava.model.UserMeal;
 import ru.javawebinar.topjava.model.UserMealWithExcess;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class UserMealsUtil {
     public static void main(String[] args) {
@@ -24,16 +25,50 @@ public class UserMealsUtil {
         List<UserMealWithExcess> mealsTo = filteredByCycles(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
         mealsTo.forEach(System.out::println);
 
-//        System.out.println(filteredByStreams(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
+        System.out.println(filteredByStreams(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
     }
 
     public static List<UserMealWithExcess> filteredByCycles(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        // TODO return filtered list with excess. Implement by cycles
-        return null;
+        // based on https://stackoverflow.com/questions/4553624/hashmap-get-put-complexity
+        // assume the complexity of get/put methods of HashMap implementation is O(1)
+
+        // calculate calories consumed per day
+        Map<LocalDate, Integer> caloriesPerDayStatistics = new HashMap<>();
+        meals.forEach(meal -> {
+            LocalDate date = meal.getDateTime().toLocalDate();
+            Integer cal = caloriesPerDayStatistics.getOrDefault(date, 0);
+            caloriesPerDayStatistics.put(date, cal + meal.getCalories());
+        });
+
+        List<UserMealWithExcess> resultMeals = new ArrayList<>();
+        meals.forEach(meal -> {
+            // filter meals out by given time-interval
+            if (TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime)) {
+
+                boolean excess = caloriesPerDayStatistics.getOrDefault(meal.getDateTime().toLocalDate(), 0) > caloriesPerDay;
+                UserMealWithExcess userMealWithExcess = new UserMealWithExcess(meal, excess);
+
+                resultMeals.add(userMealWithExcess);
+            }
+        });
+        return resultMeals;
     }
 
     public static List<UserMealWithExcess> filteredByStreams(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        // TODO Implement by streams
-        return null;
+        // based on https://stackoverflow.com/questions/4553624/hashmap-get-put-complexity
+        // assume the complexity of get/put methods of HashMap implementation is O(1)
+
+        // calculate calories consumed per day
+        Map<LocalDate, Integer> caloriesPerDayStatistics = meals.stream()
+                .collect(
+                        Collectors.groupingBy(meal -> meal.getDateTime().toLocalDate(), Collectors.summingInt(UserMeal::getCalories)));
+
+        return meals.stream()
+                .map(meal -> new UserMealWithExcess(
+                        meal,
+                        caloriesPerDayStatistics.get(meal.getDateTime().toLocalDate()) > caloriesPerDay))
+                .filter(userMealWithExcess ->
+                        TimeUtil.isBetweenHalfOpen(userMealWithExcess.getDateTime().toLocalTime(), startTime, endTime))
+                .collect(Collectors.toList());
     }
 }
