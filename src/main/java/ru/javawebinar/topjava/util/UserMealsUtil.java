@@ -45,8 +45,8 @@ public class UserMealsUtil {
             // filter meals out by given time-interval
             if (TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime)) {
 
-                boolean excess = caloriesPerDayStatistics.getOrDefault(meal.getDateTime().toLocalDate(), 0) > caloriesPerDay;
-                UserMealWithExcess userMealWithExcess = new UserMealWithExcess(meal, excess);
+                boolean excess = caloriesPerDayStatistics.get(meal.getDateTime().toLocalDate()) > caloriesPerDay;
+                UserMealWithExcess userMealWithExcess = convertUserMeal(meal, excess);
 
                 resultMeals.add(userMealWithExcess);
             }
@@ -61,14 +61,30 @@ public class UserMealsUtil {
         // calculate calories consumed per day
         Map<LocalDate, Integer> caloriesPerDayStatistics = meals.stream()
                 .collect(
-                        Collectors.groupingBy(meal -> meal.getDateTime().toLocalDate(), Collectors.summingInt(UserMeal::getCalories)));
+                        Collectors.groupingBy(
+                                meal -> meal.getDateTime().toLocalDate(),
+                                Collectors.summingInt(UserMeal::getCalories)));
 
         return meals.stream()
-                .map(meal -> new UserMealWithExcess(
+                .map(meal -> convertUserMeal(
                         meal,
                         caloriesPerDayStatistics.get(meal.getDateTime().toLocalDate()) > caloriesPerDay))
                 .filter(userMealWithExcess ->
                         TimeUtil.isBetweenHalfOpen(userMealWithExcess.getDateTime().toLocalTime(), startTime, endTime))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Вспомогательный метод для преобразования объекта класса UserMeal в объект класса UserMealWithExcess
+     * @param userMeal - объект, свойства которого нужно использовать при создании результирующего объекта в @return
+     * @param excess - флаг, показывающий имеется ли превышение калорий создаваемого объекта @return
+     * @return - объект класса UserMealWithExcess, созданный с использованием данных из входный параметров
+     */
+    public static UserMealWithExcess convertUserMeal(UserMeal userMeal, boolean excess) {
+        return new UserMealWithExcess(
+                userMeal.getDateTime(),
+                userMeal.getDescription(),
+                userMeal.getCalories(),
+                excess);
     }
 }
