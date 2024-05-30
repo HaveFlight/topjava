@@ -80,7 +80,7 @@ public class UserMealsUtil {
      * @param excess - флаг, показывающий имеется ли превышение калорий создаваемого объекта @return
      * @return - объект класса UserMealWithExcess, созданный с использованием данных из входный параметров
      */
-    public static UserMealWithExcess convertUserMeal(UserMeal userMeal, boolean excess) {
+    private static UserMealWithExcess convertUserMeal(UserMeal userMeal, boolean excess) {
         return new UserMealWithExcess(
                 userMeal.getDateTime(),
                 userMeal.getDescription(),
