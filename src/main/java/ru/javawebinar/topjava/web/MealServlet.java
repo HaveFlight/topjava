@@ -1,6 +1,5 @@
 package ru.javawebinar.topjava.web;
 
-import com.sun.istack.internal.Nullable;
 import org.slf4j.Logger;
 import ru.javawebinar.topjava.dao.MealDao;
 import ru.javawebinar.topjava.dao.MealDaoImplInMemory;
@@ -15,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -23,38 +23,42 @@ public class MealServlet extends HttpServlet {
     private static final String CREATE_OR_EDIT = "/meal.jsp";
     private static final String LIST = "/meals.jsp";
     private static final Logger log = getLogger(MealServlet.class);
-    private final MealDao meals;
+    private final MealDao meals = MealDaoImplInMemory.getInstance();
 
-    public MealServlet() {
-        meals = new MealDaoImplInMemory();
+    @Override
+    public void init() throws ServletException {
+        super.init();
         MealsUtil.mockData().forEach(meals::create);
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        log.debug("redirect to meals");
 
         String forward = LIST;
-        String action = request.getParameter("action");
+        String action = Objects.toString(request.getParameter("action"), "");
 
-        if (action != null) {
-            switch(action) {
-                case "edit":
-                    Long id = Long.parseLong(request.getParameter("id")) ;
-                    Meal meal = meals.read(id);
-                    request.setAttribute("meal", meal);
-                case "insert":
-                    forward = CREATE_OR_EDIT;
-                    break;
-                case "delete":
-                    Long idToDelete = Long.parseLong(request.getParameter("id")) ;
-                    meals.delete(idToDelete);
-                    response.sendRedirect("meals");
-                    return;
-            }
-        } else {
-            List<MealTo> mealTos = MealsUtil.filteredByStreams(meals.readAll(), CALORIES_PER_DAY_THRESHOLD);
-            request.setAttribute("meals", mealTos);
+        switch(action) {
+            case "edit":
+                long id = Long.parseLong(request.getParameter("id")) ;
+                Meal meal = meals.read(id);
+                request.setAttribute("meal", meal);
+                log.debug("redirect to edit meal {}", id);
+                forward = CREATE_OR_EDIT;
+                break;
+            case "insert":
+                log.debug("redirect to add new meal");
+                forward = CREATE_OR_EDIT;
+                break;
+            case "delete":
+                long idToDelete = Long.parseLong(request.getParameter("id")) ;
+                log.debug("delete meal {}", idToDelete);
+                meals.delete(idToDelete);
+                response.sendRedirect("meals");
+                return;
+            default:
+                log.debug("get meal list");
+                List<MealTo> mealTos = MealsUtil.filteredByStreams(meals.readAll(), CALORIES_PER_DAY_THRESHOLD);
+                request.setAttribute("meals", mealTos);
         }
 
         request.getRequestDispatcher(forward).forward(request, response);
@@ -62,27 +66,23 @@ public class MealServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-//        super.doPost(req, resp);
+        Meal mealToModify;
         String desc = req.getParameter("description");
         int calories = Integer.parseInt(req.getParameter("calories"));
         LocalDateTime dt = LocalDateTime.parse(req.getParameter("dateTime"));
 
         if (req.getParameter("id") == null || req.getParameter("id").isEmpty()) {
-            meals.create(new Meal(null, dt, desc, calories));
+            mealToModify = meals.create(new Meal(dt, desc, calories));
         } else {
             Long id =  Long.parseLong(req.getParameter("id"));
-            meals.update(new Meal(id, dt, desc, calories));
+            mealToModify = meals.update(new Meal(id, dt, desc, calories));
+        }
+        if (mealToModify != null ) {
+            log.debug("meal {} POSTed successfully", mealToModify.getId());
+        } else {
+            log.debug("meal POST failed");
         }
 
-        List<MealTo> mealTos = MealsUtil.filteredByStreams(meals.readAll(), CALORIES_PER_DAY_THRESHOLD);
-        req.setAttribute("meals", mealTos);
-        req.getRequestDispatcher(LIST).forward(req, resp);
-    }
-
-    @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-//        super.doDelete(req, resp);
-        Long idToDelete = Long.parseLong(req.getParameter("id")) ;
-        meals.delete(idToDelete);
+        resp.sendRedirect("meals");
     }
 }

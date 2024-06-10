@@ -36,12 +36,12 @@
                     <c:set var="textColor" value="${meal.excess ? 'color:red;' : 'color:green;' }"/>
 
                     <tr style="${textColor}">
-                        <td><c:out value="${fn:replace(meal.dateTime,'T',' ')}" /></td>
-                        <td><c:out value="${meal.description}" /></td>
-                        <td><c:out value="${meal.calories}" /></td>
+                        <td>${fn:replace(meal.dateTime,'T',' ')}</td>
+                        <td>${meal.description}</td>
+                        <td>${meal.calories}</td>
 
-                        <td><a href="meals?action=edit&id=<c:out value="${meal.id}"/>">Update</a></td>
-                        <td><a href="meals?action=delete&id=<c:out value="${meal.id}"/>">Delete</a></td>
+                        <td><a href="meals?action=edit&id=${meal.id}">Update</a></td>
+                        <td><a href="meals?action=delete&id=${meal.id}">Delete</a></td>
                     </tr>
                 </c:forEach>
             </tbody>

@@ -8,7 +8,7 @@
 
     <filter>
         <filter-name>CharacterSetFilter</filter-name>
-        <filter-class>ru.javawebinar.topjava.util.CharacterSetFilter</filter-class>
+        <filter-class>ru.javawebinar.topjava.web.CharacterSetFilter</filter-class>
     </filter>
 
     <filter-mapping>

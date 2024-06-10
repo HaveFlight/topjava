@@ -1,18 +1,13 @@
 package ru.javawebinar.topjava.model;
 
-import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-@Getter
 public class MealTo {
     private final Long id;
     private final LocalDateTime dateTime;
-
     private final String description;
-
     private final int calories;
-
     private final boolean excess;
 
     public MealTo(Long id, LocalDateTime dateTime, String description, int calories, boolean excess) {
@@ -22,6 +17,16 @@ public class MealTo {
         this.calories = calories;
         this.excess = excess;
     }
+
+    public Long getId() { return id; }
+
+    public LocalDateTime getDateTime() { return dateTime; }
+
+    public String getDescription() { return description; }
+
+    public int getCalories() { return calories; }
+
+    public boolean getExcess() {return excess; }
 
     @Override
     public String toString() {
