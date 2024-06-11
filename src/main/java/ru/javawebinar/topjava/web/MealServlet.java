@@ -23,11 +23,13 @@ public class MealServlet extends HttpServlet {
     private static final String CREATE_OR_EDIT = "/meal.jsp";
     private static final String LIST = "/meals.jsp";
     private static final Logger log = getLogger(MealServlet.class);
-    private final MealDao meals = MealDaoImplInMemory.getInstance();
+    private MealDao meals;
 
     @Override
     public void init() throws ServletException {
         super.init();
+
+        meals = new MealDaoImplInMemory();
         MealsUtil.mockData().forEach(meals::create);
     }
 
@@ -66,19 +68,19 @@ public class MealServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Meal mealToModify;
         String desc = req.getParameter("description");
         int calories = Integer.parseInt(req.getParameter("calories"));
         LocalDateTime dt = LocalDateTime.parse(req.getParameter("dateTime"));
 
+        Meal savedMeal;
         if (req.getParameter("id") == null || req.getParameter("id").isEmpty()) {
-            mealToModify = meals.create(new Meal(dt, desc, calories));
+            savedMeal = meals.create(new Meal(dt, desc, calories));
         } else {
             Long id =  Long.parseLong(req.getParameter("id"));
-            mealToModify = meals.update(new Meal(id, dt, desc, calories));
+            savedMeal = meals.update(new Meal(id, dt, desc, calories));
         }
-        if (mealToModify != null ) {
-            log.debug("meal {} POSTed successfully", mealToModify.getId());
+        if (savedMeal != null ) {
+            log.debug("meal {} POSTed successfully", savedMeal.getId());
         } else {
             log.debug("meal POST failed");
         }

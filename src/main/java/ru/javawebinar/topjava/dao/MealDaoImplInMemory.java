@@ -11,28 +11,16 @@ public class MealDaoImplInMemory implements MealDao {
     private final AtomicLong maxId;
     private final ConcurrentMap<Long, Meal> meals;
 
-    private static MealDaoImplInMemory instance;
-
-    private MealDaoImplInMemory() {
+    public MealDaoImplInMemory() {
         maxId = new AtomicLong(1L);
         meals = new ConcurrentHashMap<>();
     }
 
-    public static MealDaoImplInMemory getInstance() {
-        if (instance == null) {
-            instance = new MealDaoImplInMemory();
-        }
-        return instance;
-    }
-
     @Override
     public Meal create(Meal meal) {
-        Meal newMeal = null;
-        if (meal.getId() == null) {
-            Long idMeal = getNextId();
-            newMeal = new Meal(idMeal, meal.getDateTime(), meal.getDescription(), meal.getCalories());
-            meals.put(idMeal, newMeal);
-        }
+        Long idMeal = getNextId();
+        Meal newMeal = new Meal(idMeal, meal.getDateTime(), meal.getDescription(), meal.getCalories());
+        meals.put(idMeal, newMeal);
         return newMeal;
     }
 
@@ -57,6 +45,6 @@ public class MealDaoImplInMemory implements MealDao {
 
     @Override
     public void delete(long id) {
-            meals.remove(id);
+        meals.remove(id);
     }
 }
