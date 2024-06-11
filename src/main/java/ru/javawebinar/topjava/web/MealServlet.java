@@ -27,21 +27,17 @@ public class MealServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        super.init();
-
         meals = new MealDaoImplInMemory();
-        MealsUtil.mockData().forEach(meals::create);
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
         String forward = LIST;
         String action = Objects.toString(request.getParameter("action"), "");
 
-        switch(action) {
+        switch (action) {
             case "edit":
-                long id = Long.parseLong(request.getParameter("id")) ;
+                long id = Long.parseLong(request.getParameter("id"));
                 Meal meal = meals.read(id);
                 request.setAttribute("meal", meal);
                 log.debug("redirect to edit meal {}", id);
@@ -52,7 +48,7 @@ public class MealServlet extends HttpServlet {
                 forward = CREATE_OR_EDIT;
                 break;
             case "delete":
-                long idToDelete = Long.parseLong(request.getParameter("id")) ;
+                long idToDelete = Long.parseLong(request.getParameter("id"));
                 log.debug("delete meal {}", idToDelete);
                 meals.delete(idToDelete);
                 response.sendRedirect("meals");
@@ -68,18 +64,19 @@ public class MealServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String desc = req.getParameter("description");
+        String description = req.getParameter("description");
         int calories = Integer.parseInt(req.getParameter("calories"));
-        LocalDateTime dt = LocalDateTime.parse(req.getParameter("dateTime"));
+        LocalDateTime dateTime = LocalDateTime.parse(req.getParameter("dateTime"));
 
         Meal savedMeal;
-        if (req.getParameter("id") == null || req.getParameter("id").isEmpty()) {
-            savedMeal = meals.create(new Meal(dt, desc, calories));
+        String idParameter = req.getParameter("id");
+        if (idParameter == null || idParameter.isEmpty()) {
+            savedMeal = meals.create(new Meal(dateTime, description, calories));
         } else {
-            Long id =  Long.parseLong(req.getParameter("id"));
-            savedMeal = meals.update(new Meal(id, dt, desc, calories));
+            Long id = Long.parseLong(idParameter);
+            savedMeal = meals.update(new Meal(id, dateTime, description, calories));
         }
-        if (savedMeal != null ) {
+        if (savedMeal != null) {
             log.debug("meal {} POSTed successfully", savedMeal.getId());
         } else {
             log.debug("meal POST failed");

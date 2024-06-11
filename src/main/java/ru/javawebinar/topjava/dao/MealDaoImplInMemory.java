@@ -1,6 +1,7 @@
 package ru.javawebinar.topjava.dao;
 
 import ru.javawebinar.topjava.model.Meal;
+import ru.javawebinar.topjava.util.MealsUtil;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,6 +15,8 @@ public class MealDaoImplInMemory implements MealDao {
     public MealDaoImplInMemory() {
         maxId = new AtomicLong(1L);
         meals = new ConcurrentHashMap<>();
+
+        MealsUtil.mockData().forEach(this::create);
     }
 
     @Override
