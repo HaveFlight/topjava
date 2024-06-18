@@ -16,11 +16,72 @@
         }
     </style>
 </head>
-<body>
+<body onload="fillFilters()">
+    <script>
+        function onApplyFilterClick() {
+            const startDate = document.getElementById("startDate").value;
+            const endDate = document.getElementById("endDate").value;
+            const startTime = document.getElementById("startTime").value;
+            const endTime = document.getElementById("endTime").value;
+
+            var filterString = "";
+            if (startDate) {
+                filterString += "startDate=" + startDate;
+            }
+            if (endDate) {
+                filterString += (filterString.length > 0 ? "&" : "" ) + "endDate=" + endDate;
+            }
+            if (startTime) {
+                filterString += (filterString.length > 0 ? "&" : "" ) + "startTime=" + startTime;
+            }
+            if (endTime) {
+                filterString += (filterString.length > 0 ? "&" : "" ) + "endTime=" + endTime;
+            }
+
+            location.href = "meals" + (filterString.length > 0 ? "?" + filterString : "");
+        }
+        function fillFilters() {
+            const startDate = (new URLSearchParams(window.location.search)).get("startDate");
+            const endDate = (new URLSearchParams(window.location.search)).get("endDate");
+            const startTime = (new URLSearchParams(window.location.search)).get("startTime");
+            const endTime = (new URLSearchParams(window.location.search)).get("endTime");
+
+            if (startDate) {
+                document.getElementById("startDate").value = startDate;
+            }
+            if (endDate) {
+                document.getElementById("endDate").value = endDate;
+            }
+            if (startTime) {
+                document.getElementById("startTime").value = startTime;
+            }
+            if (endTime) {
+                document.getElementById("endTime").value = endTime;
+            }
+        }
+    </script>
 <section>
     <h3><a href="index.html">Home</a></h3>
     <hr/>
     <h2>Meals</h2>
+    <table border="0" cellpadding="8" cellspacing="0">
+          <thead>
+              <tr>
+                  <th>От даты (включая)</th>
+                  <th>До даты (включая)</th>
+                  <th>От времени (включая)</th>
+                  <th>До времени (исключая)</th>
+              </tr>
+          </thead>
+          <tr>
+              <td><input type="date" name="startDate" id="startDate"></td>
+              <td><input type="date" name="endDate" id="endDate"></td>
+              <td><input type="time" name="startTime" id="startTime"></td>
+              <td><input type="time" name="endTime" id="endTime"></td>
+          </tr>
+    </table>
+    <button onclick="onApplyFilterClick()">Отфильтровать</button>
+    <br><br>
     <a href="meals?action=create">Add Meal</a>
     <br><br>
     <table border="1" cellpadding="8" cellspacing="0">
@@ -34,7 +95,7 @@
         </tr>
         </thead>
         <c:forEach items="${requestScope.meals}" var="meal">
-            <jsp:useBean id="meal" type="ru.javawebinar.topjava.model.MealTo"/>
+            <jsp:useBean id="meal" type="ru.javawebinar.topjava.to.MealTo"/>
             <tr class="${meal.excess ? 'excess' : 'normal'}">
                 <td>
                         <%--${meal.dateTime.toLocalDate()} ${meal.dateTime.toLocalTime()}--%>
