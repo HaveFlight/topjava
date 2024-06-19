@@ -16,7 +16,7 @@
         }
     </style>
 </head>
-<body onload="fillFilters()">
+<body>
     <script>
         function onApplyFilterClick() {
             const startDate = document.getElementById("startDate").value;
@@ -40,25 +40,6 @@
 
             location.href = "meals" + (filterString.length > 0 ? "?" + filterString : "");
         }
-        function fillFilters() {
-            const startDate = (new URLSearchParams(window.location.search)).get("startDate");
-            const endDate = (new URLSearchParams(window.location.search)).get("endDate");
-            const startTime = (new URLSearchParams(window.location.search)).get("startTime");
-            const endTime = (new URLSearchParams(window.location.search)).get("endTime");
-
-            if (startDate) {
-                document.getElementById("startDate").value = startDate;
-            }
-            if (endDate) {
-                document.getElementById("endDate").value = endDate;
-            }
-            if (startTime) {
-                document.getElementById("startTime").value = startTime;
-            }
-            if (endTime) {
-                document.getElementById("endTime").value = endTime;
-            }
-        }
     </script>
 <section>
     <h3><a href="index.html">Home</a></h3>
@@ -74,10 +55,10 @@
               </tr>
           </thead>
           <tr>
-              <td><input type="date" name="startDate" id="startDate"></td>
-              <td><input type="date" name="endDate" id="endDate"></td>
-              <td><input type="time" name="startTime" id="startTime"></td>
-              <td><input type="time" name="endTime" id="endTime"></td>
+              <td><input type="date" name="startDate" id="startDate" value=${param.startDate}></td>
+              <td><input type="date" name="endDate" id="endDate" value=${param.endDate}></td>
+              <td><input type="time" name="startTime" id="startTime" value=${param.startTime}></td>
+              <td><input type="time" name="endTime" id="endTime" value=${param.endTime}></td>
           </tr>
     </table>
     <button onclick="onApplyFilterClick()">Отфильтровать</button>

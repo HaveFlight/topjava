@@ -19,7 +19,6 @@ public class InMemoryUserRepository implements UserRepository {
     private final Map<Integer, User> repository = new ConcurrentHashMap<>();
     private final AtomicInteger counter = new AtomicInteger(0);
 
-
     @Override
     public boolean delete(int id) {
         log.info("delete {}", id);
@@ -31,9 +30,6 @@ public class InMemoryUserRepository implements UserRepository {
         log.info("save {}", user);
         if (user.isNew()) {
             user.setId(counter.incrementAndGet());
-            // I'd like to convert email toLower() for each user added.
-            // Is here a correct place to do so?
-            //user.setEmail(user.getEmail().toLowerCase());
             repository.put(user.getId(), user);
             return user;
         }

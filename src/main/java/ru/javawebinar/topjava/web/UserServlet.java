@@ -24,6 +24,6 @@ public class UserServlet extends HttpServlet {
         log.debug("set authenticated user");
         int userId = Integer.parseInt(req.getParameter("userId"));
         SecurityUtil.setAuthUserId(userId);
-        resp.sendRedirect("index.html");
+        resp.sendRedirect("meals");
     }
 }

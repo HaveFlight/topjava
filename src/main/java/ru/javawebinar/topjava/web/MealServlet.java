@@ -5,14 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ru.javawebinar.topjava.model.Meal;
-import ru.javawebinar.topjava.model.Role;
-import ru.javawebinar.topjava.model.User;
-import ru.javawebinar.topjava.repository.MealRepository;
-import ru.javawebinar.topjava.repository.inmemory.InMemoryMealRepository;
-import ru.javawebinar.topjava.to.MealTo;
-import ru.javawebinar.topjava.util.MealsUtil;
 import ru.javawebinar.topjava.web.meal.MealRestController;
-import ru.javawebinar.topjava.web.user.AdminRestController;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -23,8 +16,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 import static ru.javawebinar.topjava.util.DateTimeUtil.*;
@@ -94,7 +85,7 @@ public class MealServlet extends HttpServlet {
                 LocalTime endTime = tryParseLocalTime(request.getParameter("endTime"));
 
                 if (startDate != null || endDate != null || startTime != null || endTime != null) {
-                    request.setAttribute("meals", mealRestController.getAll(startDate, startTime, endDate, endTime));
+                    request.setAttribute("meals", mealRestController.getFiltered(startDate, startTime, endDate, endTime));
                 } else {
                     request.setAttribute("meals", mealRestController.getAll());
                 }

@@ -10,35 +10,38 @@ import ru.javawebinar.topjava.to.MealTo;
 import ru.javawebinar.topjava.util.MealsUtil;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
 import static ru.javawebinar.topjava.util.ValidationUtil.assureIdConsistent;
 import static ru.javawebinar.topjava.util.ValidationUtil.checkNew;
+import static ru.javawebinar.topjava.web.SecurityUtil.authUserCaloriesPerDay;
 import static ru.javawebinar.topjava.web.SecurityUtil.authUserId;
 
 @Controller
 public class MealRestController {
-    protected final Logger log = LoggerFactory.getLogger(getClass());
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     @Autowired
     private MealService service;
 
     public List<MealTo> getAll() {
         log.info("getAll");
-        return MealsUtil.getTos(service.getAll(authUserId()), MealsUtil.DEFAULT_CALORIES_PER_DAY) ;
+        return MealsUtil.getTos(service.getAll(authUserId()),  authUserCaloriesPerDay()) ;
     }
 
-    public List<MealTo> getAll(LocalDate startDate, LocalTime startTime, LocalDate endDate, LocalTime endTime) {
+    public List<MealTo> getFiltered(LocalDate startDate, LocalTime startTime, LocalDate endDate, LocalTime endTime) {
         log.info("getAll filtered");
         return MealsUtil.getFilteredTos(
-                service.getAll(authUserId(), startDate, endDate),
-                MealsUtil.DEFAULT_CALORIES_PER_DAY,
+                service.getFiltered(
+                        authUserId(),
+                        startDate == null ? LocalDate.MIN : startDate,
+                        endDate == null ? LocalDate.MAX : endDate.plusDays(1L)
+                ),
+                authUserCaloriesPerDay(),
                 startTime == null ? LocalTime.MIN : startTime,
                 endTime == null ? LocalTime.MAX : endTime);
-        // TODO: LocalTime variables are checked on null here,
-        //  LocalDate ones - in nested logic inside repository implementation.
-        //  Is that a correct approach?
     }
 
     public void delete(int mealId) {
