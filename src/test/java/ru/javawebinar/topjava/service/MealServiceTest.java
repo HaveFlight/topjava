@@ -1,6 +1,5 @@
 package ru.javawebinar.topjava.service;
 
-import net.bytebuddy.implementation.bytecode.Throw;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -17,7 +16,6 @@ import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -60,11 +58,13 @@ public class MealServiceTest {
     }
 
     @Test(expected = NotFoundException.class)
-    public void getByAnotherUser() {
+    public void getByAnotherUser()  throws Exception {
         int userIdOwner = UserTestData.USER_ID;
         int userIdAnother = UserTestData.ADMIN_ID;
-
         Meal existingMeal = service.getAll(userIdOwner).stream().findFirst().orElse(null);
+        if (existingMeal == null) {
+            throw new Exception("Cannot find data for the test case");
+        }
 
         service.get(existingMeal.getId(), userIdAnother);
     }
@@ -74,13 +74,16 @@ public class MealServiceTest {
     public void createByExistingUser() {
         int userId = UserTestData.USER_ID;
 
-        Meal created = service.create(getNew(), userId);
+        Meal newMeal1 = getNew();
+        Meal created = service.create(newMeal1, userId);
         Integer newId = created.getId();
-        Meal newMeal = getNew();
-        newMeal.setId(newId);
 
-        assertMatch(created, newMeal);
-        assertMatch(service.get(newId, userId), newMeal);
+        Meal newMeal2 = getNew();
+        newMeal2.setId(newId);
+        newMeal2.setDateTime(newMeal1.getDateTime());
+
+        assertMatch(created, newMeal2);
+        assertMatch(service.get(newId, userId), newMeal2);
     }
 
     @Test(expected = DataIntegrityViolationException.class)
