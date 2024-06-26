@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import static ru.javawebinar.topjava.UserTestData.*;
 
-@Primary
 @Repository
 public class InMemoryUserRepository extends InMemoryBaseRepository<User> implements UserRepository {
 
