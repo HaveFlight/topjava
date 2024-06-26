@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.Assert.assertThrows;
 import static ru.javawebinar.topjava.MealTestData.*;
 
 @ContextConfiguration({
@@ -42,33 +43,25 @@ public class MealServiceTest {
     @Test
     public void getExisting() {
         int userId = UserTestData.USER_ID;
-        Meal meal = meal1;
+        Meal meal = userMeal1;
 
         Meal actualMeal = service.get(meal.getId(), userId);
 
         assertMatch(actualMeal, meal);
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void getAbsent() {
         int userId = UserTestData.USER_ID;
         int absentMealId = NOT_FOUND;
 
-        service.get(absentMealId, userId);
+        assertThrows(NotFoundException.class, () -> service.get(absentMealId, userId));
     }
 
-    @Test(expected = NotFoundException.class)
-    public void getByAnotherUser()  throws Exception {
-        int userIdOwner = UserTestData.USER_ID;
-        int userIdAnother = UserTestData.ADMIN_ID;
-        Meal existingMeal = service.getAll(userIdOwner).stream().findFirst().orElse(null);
-        if (existingMeal == null) {
-            throw new Exception("Cannot find data for the test case");
-        }
-
-        service.get(existingMeal.getId(), userIdAnother);
+    @Test
+    public void getByAnotherUser()  {
+        assertThrows(NotFoundException.class, () -> service.get(userMeal1.getId(), UserTestData.ADMIN_ID));
     }
-
 
     @Test
     public void createByExistingUser() {
@@ -76,140 +69,83 @@ public class MealServiceTest {
 
         Meal newMeal1 = getNew();
         Meal created = service.create(newMeal1, userId);
-        Integer newId = created.getId();
+        int newId = created.getId();
+        created.setId(null);
 
         Meal newMeal2 = getNew();
-        newMeal2.setId(newId);
-        newMeal2.setDateTime(newMeal1.getDateTime());
+        newMeal2.setId(null);
 
         assertMatch(created, newMeal2);
-        assertMatch(service.get(newId, userId), newMeal2);
-    }
 
-    @Test(expected = DataIntegrityViolationException.class)
-    public void createByAbsentUser() {
-        int userId = UserTestData.NOT_FOUND;
+        Meal mealJustInserted = service.get(newId, userId);
+        mealJustInserted.setId(null);
 
-        service.create(getNew(), userId);
-    }
-
-    @Test(expected = DuplicateKeyException.class)
-    public void createDuplicateByDateTime() throws Exception {
-        int userId = UserTestData.USER_ID;
-        Meal existingMeal = service.getAll(userId).stream().findFirst().orElse(null);
-
-        if (existingMeal == null) {
-            throw new Exception("Cannot find data for the test case");
-        }
-
-        Meal duplicateMeal = getNew();
-        duplicateMeal.setDateTime(existingMeal.getDateTime());
-
-        service.create(duplicateMeal, userId);
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void deleteExisting() throws Exception {
-        int userId = UserTestData.USER_ID;
-        Meal existingMeal = service.getAll(userId).stream().findFirst().orElse(null);
-
-        if (existingMeal == null) {
-            throw new Exception("Cannot find data for the test case");
-        }
-
-        service.delete(existingMeal.getId(), userId);
-
-        service.get(existingMeal.getId(), userId);
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void deleteExistingByAnotherUser() throws Exception {
-        int userIdOwner = UserTestData.USER_ID;
-        int userIdAnother = UserTestData.ADMIN_ID;
-
-        Meal existingMeal = service.getAll(userIdOwner).stream().findFirst().orElse(null);
-
-        if (existingMeal == null) {
-            throw new Exception("Cannot find data for the test case");
-        }
-
-        service.delete(existingMeal.getId(), userIdAnother);
-    }
-
-
-    @Test(expected = NotFoundException.class)
-    public void deleteAbsent() throws Exception {
-        int userId = UserTestData.USER_ID;
-        boolean mealIsAbsent = false;
-        try {
-            service.get(MealTestData.NOT_FOUND, userId);
-        }
-        catch (NotFoundException exc) {
-            mealIsAbsent = true;
-        }
-
-        if (!mealIsAbsent) {
-            throw new Exception("Data doesn't suite the test case");
-        }
-
-        service.delete(MealTestData.NOT_FOUND, userId);
+        assertMatch(mealJustInserted, newMeal2);
     }
 
     @Test
-    public void updateExisting() throws Exception {
-        int userId = UserTestData.USER_ID;
-        Meal existingMeal = service.getAll(userId).stream().findFirst().orElse(null);
-        if (existingMeal == null) {
-            throw new Exception("Cannot find data for the test case");
-        }
-        int existingMealId = existingMeal.getId();
-        Meal updatedMeal = getUpdated(existingMeal);
-
-        service.update(updatedMeal, userId);
-
-        assertMatch(service.get(existingMealId, userId), updatedMeal);
+    public void createByAbsentUser() {
+        assertThrows(DataIntegrityViolationException.class, () -> service.create(getNew(), UserTestData.NOT_FOUND));
     }
 
-    @Test(expected = NotFoundException.class)
-    public void updateExistingByAnotherUser() throws Exception {
-        int userIdOwner = UserTestData.USER_ID;
-        int userIdAnother = UserTestData.ADMIN_ID;
-        Meal existingMeal = service.getAll(userIdOwner).stream().findFirst().orElse(null);
-        if (existingMeal == null) {
-            throw new Exception("Cannot find data for the test case");
-        }
-        int existingMealId = existingMeal.getId();
-        Meal updatedMeal = getUpdated(existingMeal);
+    @Test
+    public void createDuplicateByDateTime() {
+        Meal duplicateMeal = getNew();
+        duplicateMeal.setDateTime(userMeal1.getDateTime());
 
-        service.update(updatedMeal, userIdAnother);
+        assertThrows(DuplicateKeyException.class, () -> service.create(duplicateMeal, UserTestData.USER_ID));
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
+    public void deleteExisting() {
+        Meal existingMeal = userMeal1;
+
+        service.delete(existingMeal.getId(), UserTestData.USER_ID);
+
+        assertThrows(NotFoundException.class, () -> service.get(existingMeal.getId(), UserTestData.USER_ID));
+    }
+
+    @Test
+    public void deleteExistingByAnotherUser() {
+        assertThrows(NotFoundException.class, () -> service.delete(userMeal1.getId(), UserTestData.ADMIN_ID));
+    }
+
+    @Test
+    public void deleteAbsent() {
+        assertThrows(NotFoundException.class, () -> service.delete(MealTestData.NOT_FOUND, UserTestData.USER_ID));
+    }
+
+    @Test
+    public void updateExisting() {
+        Meal existingMeal = userMeal1;
+        int existingMealId = existingMeal.getId();
+        Meal updatedMeal = getUpdated(existingMeal);
+        Meal updatedMealCopy = getUpdated(existingMeal);
+
+        service.update(updatedMeal, UserTestData.USER_ID);
+
+        assertMatch(service.get(existingMealId, UserTestData.USER_ID), updatedMealCopy);
+    }
+
+    @Test
+    public void updateExistingByAnotherUser() {
+        Meal updatedMeal = getUpdated(userMeal1);
+
+        assertThrows(NotFoundException.class, () -> service.update(updatedMeal, UserTestData.ADMIN_ID));
+    }
+
+    @Test
     public void updateAbsent() throws Exception {
-        int userId = UserTestData.USER_ID;
-        boolean mealIsAbsent = false;
-        try {
-            service.get(MealTestData.NOT_FOUND, userId);
-        }
-        catch (NotFoundException exc) {
-            mealIsAbsent = true;
-        }
-
-        if (!mealIsAbsent) {
-            throw new Exception("Data doesn't suite the test case");
-        }
-
         Meal absentMeal = getNew();
         absentMeal.setId(MealTestData.NOT_FOUND);
 
-        service.update(absentMeal, userId);
+        assertThrows(NotFoundException.class, ()-> service.update(absentMeal, UserTestData.USER_ID));
     }
 
     @Test
     public void getAllByExistingUser() {
-        int userId = UserTestData.USER_ID;
-        List<Meal> mealsActual = service.getAll(userId);
-        List<Meal> mealsExpected = Stream.of(meal1, meal2, meal3, meal4, meal5, meal6, meal7)
+        List<Meal> mealsActual = service.getAll(UserTestData.USER_ID);
+        List<Meal> mealsExpected = Stream.of(userMeal1, userMeal2, userMeal3, userMeal4, userMeal5, userMeal6, userMeal7)
                 .sorted(Comparator
                         .comparing(Meal::getDateTime)
                         .reversed())
@@ -220,31 +156,28 @@ public class MealServiceTest {
 
     @Test
     public void getAllByAbsentUser() {
-        int userId = UserTestData.NOT_FOUND;
-        List<Meal> mealsActual = service.getAll(userId);
+        List<Meal> mealsActual = service.getAll(UserTestData.NOT_FOUND);
 
         assertMatch(mealsActual, Collections.emptyList());
     }
 
     @Test
     public void getBetweenInclusiveBelowLeftBound() {
-        int userId = UserTestData.USER_ID;
         List<Meal> mealsActual = service.getBetweenInclusive(
                 LocalDate.MIN,
                 LocalDate.of(2020, 1,29),
-                userId);
+                UserTestData.USER_ID);
 
         assertMatch(mealsActual, Collections.emptyList());
     }
 
     @Test
     public void getBetweenInclusiveExactLeftBound() {
-        int userId = UserTestData.USER_ID;
         List<Meal> mealsActual = service.getBetweenInclusive(
                 LocalDate.MIN,
                 LocalDate.of(2020, 1,30),
-                userId);
-        List<Meal> mealsExpected = Stream.of(meal1, meal2, meal3)
+                UserTestData.USER_ID);
+        List<Meal> mealsExpected = Stream.of(userMeal1, userMeal2, userMeal3)
                 .sorted(Comparator
                         .comparing(Meal::getDateTime)
                         .reversed())
@@ -255,12 +188,11 @@ public class MealServiceTest {
 
     @Test
     public void getBetweenInclusiveExactRightBound() {
-        int userId = UserTestData.USER_ID;
         List<Meal> mealsActual = service.getBetweenInclusive(
                 LocalDate.of(2020, 1,31),
                 LocalDate.of(3000,1,1),
-                userId);
-        List<Meal> mealsExpected = Stream.of(meal4, meal5, meal6, meal7)
+                UserTestData.USER_ID);
+        List<Meal> mealsExpected = Stream.of(userMeal4, userMeal5, userMeal6, userMeal7)
                 .sorted(Comparator
                         .comparing(Meal::getDateTime)
                         .reversed())
@@ -270,23 +202,21 @@ public class MealServiceTest {
     }
     @Test
     public void getBetweenInclusiveAboveRightBound() {
-        int userId = UserTestData.USER_ID;
         List<Meal> mealsActual = service.getBetweenInclusive(
                 LocalDate.of(2020, 2,1),
                 LocalDate.of(3000,1,1),
-                userId);
+                UserTestData.USER_ID);
 
         assertMatch(mealsActual, Collections.emptyList());
     }
 
     @Test
     public void getBetweenInclusiveInTheMiddle() {
-        int userId = UserTestData.USER_ID;
         List<Meal> mealsActual = service.getBetweenInclusive(
                 LocalDate.of(2020, 1,31),
                 LocalDate.of(2020, 1,31),
-                userId);
-        List<Meal> mealsExpected = Stream.of(meal4, meal5, meal6, meal7)
+                UserTestData.USER_ID);
+        List<Meal> mealsExpected = Stream.of(userMeal4, userMeal5, userMeal6, userMeal7)
                 .sorted(Comparator
                         .comparing(Meal::getDateTime)
                         .reversed())
