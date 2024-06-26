@@ -69,7 +69,6 @@ public class MealServiceTest {
         assertMatch(created, expectedMeal);
 
         Meal mealJustInserted = service.get(newId, UserTestData.USER_ID);
-        mealJustInserted.setId(null);
 
         assertMatch(mealJustInserted, expectedMeal);
     }
